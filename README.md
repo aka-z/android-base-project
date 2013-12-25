@@ -1,7 +1,8 @@
 android-base-project
 ==============
 
-Android base project, you can use this to development apps.
+Android base project, you can use this to develop android apps. 
+
 The project contains:
 
 - http request 
