@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<string name="app_name">android-base-project</string>
+	<string name="action_settings">Settings</string>
+	<string name="hello_world">Hello world!</string>
+
+	<!-- sd卡 -->
+	<string name="sd_smallsize">SD卡剩余空间不足</string>
+	<string name="no_sdcard">SD卡已拔出</string>
+
+</resources>
