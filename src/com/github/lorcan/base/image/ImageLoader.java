@@ -7,7 +7,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
@@ -100,11 +103,9 @@ public class ImageLoader {
 
     private int mScaleHeight;
 
-    private String mDistinctkey;
+    private static int mScreenWidth;
 
-    private int mScreenWidth;
-
-    private int mScreenHeigth;
+    private static int mScreenHeigth;
 
     /**
      * Instantiates a new image loader.
@@ -123,6 +124,14 @@ public class ImageLoader {
             instance = new ImageLoader();
             instance.mContext = context;
             instance.sdCardDirectory = StorageUtil.getDirByType(StorageUtil.DIR_TYPE_IMAGE);
+
+
+            //init screen size
+            WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            DisplayMetrics metrics = new DisplayMetrics();
+            wm.getDefaultDisplay().getMetrics(metrics);
+            mScreenWidth = metrics.heightPixels;
+            mScreenHeigth = metrics.widthPixels;
         }
         return instance;
     }
@@ -219,27 +228,18 @@ public class ImageLoader {
      * @return true, if successful
      */
     public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap,
-                        IImageLoadListener listener, BaseAdapter adapter, int screenWidth, int screenHeight) {
+                        IImageLoadListener listener, BaseAdapter adapter) {
         if (url == null || "".equals(url.trim())) {
             imageView.setImageDrawable(new NoRecycledDrawable(imageView.getResources(),
                     defaultBitmap));
             return false;
         }
 
-        this.mScreenWidth = screenWidth;
-        this.mScreenHeigth = screenHeight;
-
         // 出现url中有空格的现象
         url = url.replaceAll(" ", "");
 
         Bitmap bitmap = null;
-        if (mDistinctkey != null) {
-            bitmap = imageCache.get(getImageCacheKey(url, getLoadContext(imageView, mDistinctkey)));
-
-        } else {
-            bitmap = imageCache.get(getImageCacheKey(url, getLoadContext(imageView)));
-
-        }
+        bitmap = imageCache.get(getImageCacheKey(url, getLoadContext(imageView)));
 
 
         if (bitmap == null || bitmap.isRecycled()) {
@@ -268,11 +268,11 @@ public class ImageLoader {
      * @return true, if successful
      */
     public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap,
-                        IImageLoadListener listener, int scaleWidth, int scaleHeigth, int screenWidth, int screenHeight) {
+                        IImageLoadListener listener, int scaleWidth, int scaleHeigth) {
         mScaleHeight = scaleHeigth;
         mScaleWidth = scaleWidth;
 
-        return load(url, imageView, type, defaultBitmap, listener, null, screenWidth, screenHeight);
+        return load(url, imageView, type, defaultBitmap, listener, null);
     }
 
     /**
@@ -286,24 +286,9 @@ public class ImageLoader {
      * @return true, if successful
      */
     public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap,
-                        BaseAdapter adapter, int screenWidth, int screenHeight) {
-        return load(url, imageView, type, defaultBitmap, null, adapter, screenWidth, screenHeight);
+                        BaseAdapter adapter) {
+        return load(url, imageView, type, defaultBitmap, null, adapter);
     }
-
-    /**
-     * Load.
-     *
-     * @param url           the url
-     * @param imageView     the image view
-     * @param type          the type
-     * @param defaultBitmap the default bitmap
-     * @return true, if successful
-     */
-    public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap, String distinctKey, int screenWidth, int screenHeight) {
-        mDistinctkey = distinctKey;
-        return load(url, imageView, type, defaultBitmap, screenWidth, screenHeight);
-    }
-
 
     /**
      * Load.
@@ -314,8 +299,8 @@ public class ImageLoader {
      * @param adapter       the adapter
      * @return true, if successful
      */
-    public boolean load(String url, ImageView imageView, Bitmap defaultBitmap, BaseAdapter adapter, int screenWidth, int screenHeight) {
-        return load(url, imageView, TYPE_BIG_PIC, defaultBitmap, null, adapter, screenWidth, screenHeight);
+    public boolean load(String url, ImageView imageView, Bitmap defaultBitmap, BaseAdapter adapter) {
+        return load(url, imageView, TYPE_BIG_PIC, defaultBitmap, null, adapter);
     }
 
     /**
@@ -327,8 +312,8 @@ public class ImageLoader {
      * @param defaultBitmap the default bitmap
      * @return true, if successful
      */
-    public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap, int screenWidth, int screenHeight) {
-        return load(url, imageView, type, defaultBitmap, null, null, screenWidth, screenHeight);
+    public boolean load(String url, ImageView imageView, int type, Bitmap defaultBitmap) {
+        return load(url, imageView, type, defaultBitmap, null, null);
     }
 
     /**
@@ -392,11 +377,7 @@ public class ImageLoader {
                 }
                 AsyncDrawable asyncDrawable = new AsyncDrawable(task, defaultBitmap);
                 imageView.setImageDrawable(asyncDrawable);
-                if (mDistinctkey != null) {
-                    task.setLoadContext(getLoadContext(imageView, mDistinctkey));
-                } else {
-                    task.setLoadContext(getLoadContext(imageView));
-                }
+                task.setLoadContext(getLoadContext(imageView));
                 task.execute(Integer.valueOf(type).toString());
                 runningTasks.add(task);
                 // LogUtil.e(LOG_TAG, url + ":" + runningTasks.size());
@@ -462,11 +443,7 @@ public class ImageLoader {
                 AsyncDrawable asyncDrawable = new AsyncDrawable(task, defaultBitmap);
                 imageView.setImageDrawable(asyncDrawable);
                 task.imageViewReference = new WeakReference<ImageView>(imageView);
-                if (mDistinctkey != null) {
-                    task.setLoadContext(getLoadContext(imageView, mDistinctkey));
-                } else {
-                    task.setLoadContext(getLoadContext(imageView));
-                }
+                task.setLoadContext(getLoadContext(imageView));
                 task.setListener(listener);
 
                 // 3 重新存入旧的imageView及listener

@@ -31,19 +31,9 @@ public class MainActivity extends Activity {
         mImageView = (ImageView) findViewById(R.id.test_image_loader_img);
         mResponseText = (TextView) findViewById(R.id.response_text);
 
-        DisplayMetrics dm = new DisplayMetrics();
-
-        //取得窗口属性
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-
-        //窗口的宽度
-        int screenWidth = dm.widthPixels;
-
-        //窗口高度
-        int screenHeight = dm.heightPixels;
         //load image
         ImageLoader.getInstance(this).load("http://tp1.sinaimg.cn/1948832312/180/5643790868/1", mImageView, null,
-                null, screenWidth, screenHeight);
+                null);
 
         //send get request
         mRequestBtn.setOnClickListener(new View.OnClickListener() {
