@@ -2,9 +2,9 @@ package com.github.lorcan.base.network;
 
 import android.content.Context;
 
-
 import com.github.lorcan.base.parser.IParser;
 import com.github.lorcan.base.utils.LogUtil;
+
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -38,6 +38,11 @@ public class RequestTask extends GenericTask {
      */
     public static final String HTTP_POST_JSON = "POST_JSON";
 
+    /**
+     * post请求，传递文件
+     */
+    public static final String HTTP_POST_FILE = "POST_FILE";
+
     public static final String PARAM_URL = "url";
 
     public static final String PARAM_HTTP_METHOD = "httpmethod";
@@ -58,11 +63,6 @@ public class RequestTask extends GenericTask {
 
     private String mUrl;
 
-    private String mImage;
-
-    private String mAudio;
-
-    private String mCheckInId;
 
     private Header[] mHeaders;
 
@@ -81,11 +81,6 @@ public class RequestTask extends GenericTask {
         this.mContext = context;
         this.mParser = parser;
         this.mHeaders = headers;
-    }
-
-    public RequestTask(Context context, IParser parser, String image, Header[] headers) {
-        this(context, parser, headers);
-        this.mImage = image;
     }
 
     public RequestTask(Context context, IParser parser, MultipartEntity multipartEntity, Header[] headers) {
@@ -156,22 +151,22 @@ public class RequestTask extends GenericTask {
         LogUtil.i(TAG, "request url: " + mUrl);
 
         HttpClient client = null;
-        HttpResponse response = null;
-        HttpEntity entity = null;
+        HttpResponse response;
+        HttpEntity entity;
         try {
 
             client = HttpUtil.getHttpClient(mContext);
-            if (HTTP_POST.equals(mParams.getString(PARAM_HTTP_METHOD))) {
-                if (mImage != null) {
-                    response = HttpUtil.doFilePostRequest(client, mUrl, mMultipartEntity, mHeaders);
-                } else {
-                    response = HttpUtil.doPostRequest(client, mUrl, mPostParams, mHeaders);
-                }
-            } else if (HTTP_POST_JSON.equals(mParams
-                    .getString(PARAM_HTTP_METHOD))) {
-                response = HttpUtil.doPostRequest(client, mUrl, mJSONParams, mHeaders);
-            } else {
+            String method = mParams.getString(PARAM_HTTP_METHOD);
+            if (HTTP_POST.equals(method)) {
+                response = HttpUtil.doPostRequest(client, mUrl, mPostParams, mHeaders);
+            } else if (HTTP_POST_JSON.equals(method)) {
+                response = HttpUtil.doJsonPostRequest(client, mUrl, mJSONParams, mHeaders);
+            } else if (HTTP_POST_FILE.equals(method)) {
+                response = HttpUtil.doFilePostRequest(client, mUrl, mMultipartEntity, mHeaders);
+            } else if (HTTP_GET.equals(method)) {
                 response = HttpUtil.doGetRequest(client, mUrl, mHeaders);
+            } else {
+                throw new NoSuchMethodException("没有该方法：" + method);
             }
             int stateCode = response.getStatusLine().getStatusCode();
             result.stateCode = stateCode;
@@ -204,6 +199,7 @@ public class RequestTask extends GenericTask {
                 client.getConnectionManager().shutdown();
             }
         }
+
         return result;
     }
 

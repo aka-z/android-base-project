@@ -160,7 +160,7 @@ public class HttpUtil {
         return client.execute(httpPostRequest);
     }
 
-    public static HttpResponse doPostRequest(HttpClient client, String url,
+    public static HttpResponse doJsonPostRequest(HttpClient client, String url,
                                              JSONObject postJSON, Header[] headers) throws IOException {
         HttpPost httpPostRequest = new HttpPost(url);
         if (headers != null) {

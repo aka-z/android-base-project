@@ -1,13 +1,14 @@
 package com.github.lorcan.base.controller;
 
 import android.content.Context;
+
 import com.github.lorcan.base.model.TimeLineResponse;
 import com.github.lorcan.base.network.ITaskFinishListener;
 import com.github.lorcan.base.network.RequestTask;
 import com.github.lorcan.base.network.TaskParams;
 import com.github.lorcan.base.parser.BaseParser;
 import com.github.lorcan.base.parser.IParser;
-import com.github.lorcan.base.parser.SimpleParser;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.entity.mime.MultipartEntity;
 
@@ -88,11 +89,11 @@ public class NetworkController {
      * @param multipartEntity
      * @param listener
      */
-    private static void doImagePost(Context context, String url, MultipartEntity multipartEntity, IParser parser, ITaskFinishListener listener) {
+    private static void doFilePost(Context context, String url, MultipartEntity multipartEntity, IParser parser, ITaskFinishListener listener) {
         RequestTask task = new RequestTask(context, parser, multipartEntity, null);
         TaskParams params = new TaskParams();
         params.put(RequestTask.PARAM_URL, url);
-        params.put(RequestTask.PARAM_HTTP_METHOD, RequestTask.HTTP_POST);
+        params.put(RequestTask.PARAM_HTTP_METHOD, RequestTask.HTTP_POST_FILE);
         task.setTaskFinishListener(listener);
 
         task.execute(params);
