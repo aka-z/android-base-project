@@ -9,21 +9,18 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
-
 import com.github.lorcan.base.network.HttpUtil;
 import com.github.lorcan.base.utils.LogUtil;
 import com.github.lorcan.base.utils.StorageUtil;
-import org.apache.http.Header;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.message.BasicHeader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -57,21 +54,6 @@ public class ImageLoader {
      * 圆角.
      */
     public static final int TYPE_ROUND_PIC = 1005;
-
-    /**
-     * 按照屏幕高度缩放图片.
-     */
-    public static final int TYPE_SCALE_PIC_BY_HEIGTH = 1006;
-
-    /**
-     * 按照屏幕宽度缩放图片.
-     */
-    public static final int TYPE_SCALE_PIC_BY_WIDTH = 1007;
-
-    /**
-     * 按照屏幕宽度缩放图片,高度自己适应.
-     */
-    public static final int TYPE_SCALE_PIC_BY_WIDTH_WARP_HEIGHT = 1008;
 
     /**
      * The instance.
@@ -171,28 +153,6 @@ public class ImageLoader {
     }
 
     /**
-     * 释放该Context的图片加载任务及它所有的图片缓存<br>
-     * Activity destroy时才能调用.
-     *
-     * @param context the context
-     */
-    public void releaseContext(Context context, String distinctKey) {
-        String loadContext = getLoadContext(context, distinctKey);
-        int size = runningTasks.size();
-        if (size > 0) {
-            BitmapAsyncLoadTask[] arrays = new BitmapAsyncLoadTask[size];
-            runningTasks.toArray(arrays);
-            for (BitmapAsyncLoadTask task : arrays) {
-                if (task.getLoadContext().equals(loadContext)) {
-                    task.cancel(true);
-                    runningTasks.remove(task);
-                }
-            }
-        }
-        imageCache.clear(loadContext);
-    }
-
-    /**
      * 取消掉该Context等待执行的图片加载任务<br>
      * 可以在Activity pause时调用<br>
      * 若调用了，在Activity resume时需要刷新列表，重新加载图片<br>
@@ -238,8 +198,7 @@ public class ImageLoader {
         // 出现url中有空格的现象
         url = url.replaceAll(" ", "");
 
-        Bitmap bitmap = null;
-        bitmap = imageCache.get(getImageCacheKey(url, getLoadContext(imageView)));
+        Bitmap bitmap = imageCache.get(getImageCacheKey(url, getLoadContext(imageView)));
 
 
         if (bitmap == null || bitmap.isRecycled()) {
@@ -798,45 +757,21 @@ public class ImageLoader {
             if (url.startsWith(ConstantData.LOCAL_PATH_IMG)) {
                 bm = ImageUtil.getBitmapFromAssetsFile(mContext,
                         url.replaceFirst(ConstantData.LOCAL_PATH_IMG, ""));
-                if (bm != null && type == TYPE_SCALE_PIC_BY_HEIGTH) {
-                    bm = ImageUtil.doScaleByHeigth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH) {
-                    bm = ImageUtil.doScaleByWidth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH_WARP_HEIGHT) {
-                    bm = ImageUtil.doScaleByWidthWarpHeight(bm, mScaleWidth);
-                }
-                return bm;
             } else if (url.startsWith(ConstantData.SDCARD_PATH_IMG)) {
-                bm = ImageUtil
-                        .getBitmapFromFile(url.replaceFirst(ConstantData.SDCARD_PATH_IMG, ""),
-                                scaleWidth, scaleHeight);
-                if (bm != null && type == TYPE_SCALE_PIC_BY_HEIGTH) {
-                    bm = ImageUtil.doScaleByHeigth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH) {
-                    bm = ImageUtil.doScaleByWidth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH_WARP_HEIGHT) {
-                    bm = ImageUtil.doScaleByWidthWarpHeight(bm, mScaleWidth);
-                }
-                return bm;
+                bm = ImageUtil.getBitmapFromFile(url.replaceFirst(ConstantData.SDCARD_PATH_IMG, ""),
+                        scaleWidth, scaleHeight);
             } else {
                 bm = ImageUtil.getBitmapFromFile(sdCardDirectory, tempFileName, scaleWidth,
                         scaleHeight);
                 if (bm == null) {
                     bm = downloadBitmap(url, tempFileName, scaleWidth, scaleHeight);
                 }
-                if (bm != null && type == TYPE_ROUND_PIC) {
-                    bm = ImageUtil.getRoundedCornerBitmap(bm, 4);
-                }
-                if (bm != null && type == TYPE_SCALE_PIC_BY_HEIGTH) {
-                    bm = ImageUtil.doScaleByHeigth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH) {
-                    bm = ImageUtil.doScaleByWidth(bm, mScaleWidth, mScaleHeight);
-                } else if (bm != null && type == TYPE_SCALE_PIC_BY_WIDTH_WARP_HEIGHT) {
-                    bm = ImageUtil.doScaleByWidthWarpHeight(bm, mScaleWidth);
-                }
-                return bm;
             }
 
+            if (bm != null && type == TYPE_ROUND_PIC) {
+                bm = ImageUtil.getRoundedCornerBitmap(bm, 4);
+            }
+            return bm;
         }
 
         /*
@@ -972,18 +907,6 @@ public class ImageLoader {
     private String getLoadContext(Context context) {
         return context.getClass().getSimpleName() + Integer.toHexString(context.hashCode());
     }
-
-    /**
-     * Gets the load context.
-     * 同一个页面的回收机制
-     *
-     * @param context the context
-     * @return the load context
-     */
-    private String getLoadContext(Context context, String distinctKey) {
-        return context.getClass().getSimpleName() + Integer.toHexString(context.hashCode()) + distinctKey;
-    }
-
 
     /**
      * 得到image cache的key.
