@@ -1,10 +1,10 @@
 android-base-project
 ==============
 
-Android base project, you can use this to develop android apps. 
+Android base project. 
 
 The project contains:
 
-- http request 
-- image loader with cache
-- a simple storage manager
+- Http post and get request method.
+- Image loader with cache
+- A simple storage manager
