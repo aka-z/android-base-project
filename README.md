@@ -8,9 +8,6 @@ Android基础工程：
 - 一个简单的本地存储管理类。
 
 
-
-Android base project. 
-
 The project contains:
 
 - Http post and get request method.
